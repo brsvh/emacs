@@ -21920,7 +21920,17 @@ try_window_reusing_current_matrix (struct window *w)
 		 that same display vector (thus their character
 		 positions match), and we have no way of telling if
 		 that is the case.  */
-	      && it.current.dpvec_index < 0)
+	      && it.current.dpvec_index < 0
+	      /* Buffer positions alone do not identify a display row
+		 after invisible text or within a display or overlay
+		 string.  Match the initial display positions as well.  */
+	      && TEXT_POS_EQUAL_P (it.start.pos, start_row->start.pos)
+	      && (it.start.overlay_string_index
+		  == start_row->start.overlay_string_index)
+	      && TEXT_POS_EQUAL_P (it.start.string_pos,
+			       start_row->start.string_pos)
+	      && it.start.dpvec_index == start_row->start.dpvec_index
+	      && !start_row->starts_in_middle_of_char_p)
 	    break;
 
 	  it.glyph_row->reversed_p = false;
@@ -22065,6 +22075,8 @@ try_window_reusing_current_matrix (struct window *w)
       /* Give up if there is no row to reuse.  */
       if (MATRIX_ROW_BOTTOM_Y (first_reusable_row) >= yb
 	  || !first_reusable_row->enabled_p
+	  || MATRIX_ROW_STARTS_IN_MIDDLE_OF_CHAR_P (first_reusable_row)
+	  || CHARPOS (first_reusable_row->start.string_pos) >= 0
 	  || (MATRIX_ROW_START_CHARPOS (first_reusable_row)
 	      != CHARPOS (new_start)))
 	return false;
